@@ -54,11 +54,24 @@
 ##chemical_model:                          Chemical model to use for the integration. 1 = full model 2 = minimal model 3 = Abel et al 1996
 ##                                         4 = Galli & Palla 1998
 
+from numpy import array, shape, math, loadtxt, log10, vstack, arange, absolute
+from scipy.integrate import quad       
+from pylab import *                
+from numpy import pi as pi			 
+import system_arguments
+import new_ageconverter
+import reaction_and_rate_selector
+import plotter
+import sys
+from assimulo.solvers.sundials import IDA 
+from assimulo.problem import Implicit_Problem
+from math import exp, log10, fabs, atan, log
+import pickle
+
 def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual_matter_temperature, source_function,chemical_model):
-	
+		
 	global c,kb,h_p,H0,W0,T_0,kbev,Z,cooling_function,flux,k,T_m, hev	###Global parameters defined for use throughout the function
 	                                                                    ###Mianly cosmological parameter values, numerical constants etc.
-
 	c = 2.99792458*(10**8)			#Speed of light     (SI units)
 	kb = 1.38065*(10**-23)			#Boltzmann constant (SI units)
 	h_p = 6.626068*(10**-34)		#Planck's constant  (SI units)
@@ -195,7 +208,7 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 	##If there is a large discrepancy, there is a bug somewhere within the code or the solution is unstable. The user is then warned.
 
 	def error_checking(error_test,end_line,Z_initial,Z_final):
-				
+																						
 		atoms_lost = error_test*(((1+Z_final)**3)/((1+Z_initial)**3))-(end_line[0]+end_line[1]+end_line[2]+(2*end_line[3])+(2*end_line[4])+end_line[9]+end_line[10]+end_line[11]+(2*end_line[12])+(2*end_line[13])+end_line[15]+end_line[16]+(2*end_line[17])+end_line[18]+end_line[19]+end_line[20]+(2*end_line[21])+(2*end_line[22])+(3*end_line[23])+end_line[14]+(2*end_line[24]))
 
 		return(atoms_lost)
@@ -258,7 +271,6 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 		
 		##refer to reaction_and_rte_writer.py for more info and sources for these rates
 		
-		
 		flux =  [0] * 12     ##Prepare list ready to be filled with values
 
 		##Reaction H   + hv -> H+   + e-
@@ -299,7 +311,6 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 		##Reaction: H2+ + hv -> 2H+  + e-
 		
 		flux[9] = quad(lambda v: (10**((-16.926)-((4.528*(10**-2))*((4.135667516*(10**-15))*v))+(2.238*(10**-4)*(((4.135667516*(10**-15))*v)**2))+(4.425*(10**-7)*(((4.135667516*(10**-15))*v)**3))))*(4.0*pi*((h_p*v)**-1))*eval(source_function), (7.253968*(10**15)), (2.176190413*(10**16)))[0]
-		
 		
 		##reaction: H2  + hv -> H2* -> H + H"
 		
@@ -417,9 +428,9 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 		flux = [0] * 12
 	
 	#################################      BEGINNING OF INTEGRATION PROCEDURE      ###########################################################
-	
+		
 	##Begin integration procedure
-	
+	print "\n"
 	Z = Z_initial
 			
 	yinit, error_test_begin = initial_conditions(Z_initial,number_of_particles,manual_matter_temperature) ##Get the initial conditions, and get the initial values ready 
@@ -437,34 +448,42 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 	sim = IDA(model)                                                 
 
 	sim.verbosity = 50                                                  ##Set verbosity to low(not needed)
-	
-	print float(Z)
-	
+		
 	t,y,yd = sim.simulate(time_range)                                   ##Perform the simulation for one step
 	
 	eoa = (shape(y)[0])-1 
 	
 	end_line = y[(shape(y)[0])-1,:]       
 
-	yd0init = yd[eoa,:]                                                  ##Provide the new jacobian from the newly calculated results, ready for the next step
+	yd0init = yd[eoa,:]                                                 ##Provide the new jacobian from the newly calculated results, ready for the next step
 
 	plot_values = y[eoa,:]
 
 	previous_time_range = time_range
 	
-	for i in arange((Z_initial-step_size),Z_final,-step_size):      ##Z_final+step_size is used since it then subtracts the step size in the iteration
+	no_steps = (Z_initial-Z_final)/step_size						##calculate the total number of steps needed to complete the process
+	
+	count = 1                                                       ##Used to keep track of integration progress
+	pcent = (100/no_steps)*count 									##Integration progress as a percentage
+	
+	for i in arange((Z_initial-step_size),Z_final-step_size,-step_size):      ##Z_final+step_size is used since it then subtracts the step size in the iteration
 				
 		##Recompute the flux for some reactions as Z has changed
 				
-		print i
 		Z = i
 		Z_initial_s = new_ageconverter.age_converter(i)				    ##Convert Z value into age of universe
 		Z_final_s = new_ageconverter.age_converter(i-step_size)		    ##Convert Z value into age of universe
 		time_range = range_calculator(Z_final_s,Z_initial_s)	        ##Calculate the actual time in seconds to integrate over
 
+		factor = (((1.0+i)/(1.0+i+step_size))**3)                       ##Upon each step, each chemical species is multiplied by this factor to account for the expanding Universe
 		
 		
-		 ##re-initialise the values ready for integration during the next step
+		pcent = (100/no_steps)*count 									##Print the progress percentage and value for the user
+		count = count + 1
+		sys.stdout.write("\rCurrent Value, Z = " + str(i) + "\t" + str(pcent) + "%")   
+		sys.stdout.flush()
+				
+		##re-initialise the values ready for integration during the next step
 		##each of the number densities is reduced by a factor of step-size**3
 		##due to the expansion of the universe in this time
 		##the radiation temperature and matter temperature are set according
@@ -473,57 +492,19 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 		##The cooling function also comes into effect at the lower Z values
 		
 		if i > 200:                                                    
-			yinit = [end_line[0]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[1]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[2]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[3]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[4]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[5]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[6]*(((1.0+i)/(1.0+i+step_size))**4), \
-					 (T_0*(1.0+i)), \
-					 (T_0*(1.0+i)), \
-					 end_line[9]*(((1.0+i)/(1.0+i+step_size))**3),  \
-					 end_line[10]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[11]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[12]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[13]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[14]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[15]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[16]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[17]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[18]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[19]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[20]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[21]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[22]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[23]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[24]*(((1.0+i)/(1.0+i+step_size))**3)] 
+	
+			yinit = [x * factor for x in end_line[0:6]] + \
+					[end_line[6]*(((1.0+i)/(1.0+i+step_size))**4)] + \
+					[(T_0*(1.0+i))] + [(T_0*(1.0+i))] + \
+					[x * factor for x in end_line[9:25]]
+			
 		else:
-			yinit = [end_line[0]*(((1.0+i)/(1.0+i+step_size))**3), \
-			         end_line[1]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[2]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[3]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[4]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[5]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[6]*(((1.0+i)/(1.0+i+step_size))**4), \
-					 (T_0*(1+i)), \
-					 ((T_0*((1.0+i)**2))/201.0)-cooling_function(end_line[8],end_line[7],end_line[0],end_line[3],end_line[12],end_line[5],end_line[1],end_line[4],end_line[14],end_line[15],end_line[16],end_line[21]),\
-					 end_line[9]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[10]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[11]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[12]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[13]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[14]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[15]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[16]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[17]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[18]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[19]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[20]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[21]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[22]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[23]*(((1.0+i)/(1.0+i+step_size))**3), \
-					 end_line[24]*(((1.0+i)/(1.0+i+step_size))**3)] 
+			
+			yinit = [x * factor for x in end_line[0:6]] + \
+					[end_line[6]*(((1.0+i)/(1.0+i+step_size))**4)] + \
+					[(T_0*(1.0+i))] + [((T_0*((1.0+i)**2))/201.0)-cooling_function(end_line[8],end_line[7],end_line[0],end_line[3],end_line[12],end_line[5],end_line[1],end_line[4],end_line[14],end_line[15],end_line[16],end_line[21])] + \
+					[x * factor for x in end_line[9:25]]
+					
 
 		yd0init = yd[eoa,:]                                                  ##Provide the new jacobian from the newly calculated results, ready for the next step
 	
@@ -538,13 +519,31 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 		end_line = y[eoa,:]                                                  ##store plot values, alter time range and get ready for the next step.
 		previous_time_range = time_range + previous_time_range
 		plot_values = vstack((plot_values,y[eoa,:]))
-		
-	print("\nError test results:\n")
-	print(error_checking(error_test_begin,end_line,Z_initial,i))		
+	
+
+	if (error_checking(error_test_begin,end_line,Z_initial,i) < 10**-10) :
+		print("\n\nError test results: PASSED")
+	else:
+		print("\nError test results: FAILED")
+	
 
 	final_calculated_values = array(plot_values[(shape(plot_values)[0])-1][:])          ##Finds the final calculated abundacnes, ready to return to the user
-	print("\n Final calculated abundances:\n")
-	print end_line
+	print("\nFinal calculated abundances are as follows (number densities are in cm^3) :")
+	
+	print "\n[H]:\n"
+	print end_line[0]
+	print "\n[H+]:\n"
+	print end_line[1]
+	print "\n[H-]:\n"
+	print end_line[2]
+	print "\n[H2]:\n"
+	print end_line[3]
+	print "\n[H2+]:\n"
+	print end_line[4]
+	print "\n[e-]:\n"
+	print end_line[5]
+	print "\n[photon density]:\n"
+	print end_line[6]
 	
 	if plot_request == 2:																##If the user wanted to plot the results, this series of commands is run
 		plotter.plotting_program(Z_initial,Z_final,plot_values)
@@ -558,20 +557,6 @@ def PostREC(plot_request,Z_initial,Z_final,step_size,number_of_particles, manual
 ##inputs and then passes them to the main function (POSTREC).
 	
 if __name__ == '__main__':
-
-	from numpy import array, shape, math, loadtxt, log10, vstack, arange
-	from scipy.integrate import quad       
-	from pylab import *                
-	from numpy import pi as pi			 
-	import system_arguments
-	import new_ageconverter
-	import reaction_and_rate_selector
-	import plotter
-	import sys
-	from assimulo.solvers.sundials import IDA 
-	from assimulo.problem import Implicit_Problem
-	from math import exp, log10, fabs, atan, log
-	import pickle
 	
 	input_test, integration_arguments = system_arguments.check_system_arguments()																				   
 		

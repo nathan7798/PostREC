@@ -45,23 +45,13 @@ def plotting_program(Z_initial,Z_final,y):
 	labels = [r'$H$', r'$H^+$', r'$H^-$', r'$H_2$', r'$H_2^+$']
 	legend_location = 'lower left'
 	colors = ['r','b','c','m','g']
-
-	#plt.legend(labels, loc=legend_location)
 	
-	#title(r'The change in number density of Hydrogen species between '  + str(Z_initial) + ' $\leq$ Z $\leq$ '+ str(Z_final) + ' using the GP98 model' )
-	#title(r'The change in number density of Chemical species between '  + str(Z_initial) + ' $\leq$ Z $\leq$ '+ str(Z_final) + ' using the GP98 model' )
-	
-	#xlabel('Redshift (Z)')
-	
-	#ylabel(r'Fractional Abundance $cm^{-3}$')
-	
-	#show()
+	plt.legend(labels, loc=legend_location, prop={'size':10})
 	
 	##The same is repeated for each chemical species, as shown below.
 	
 	##Plot Deuterium Species
 	subplot(222)
-	#figure()
 	plot(((y[:,7]/2.725)-1),absolute((y[:,9])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'r')
 	plot(((y[:,7]/2.725)-1),absolute((y[:,10])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'b')
 	plot(((y[:,7]/2.725)-1),absolute((y[:,11])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'c')
@@ -79,24 +69,14 @@ def plotting_program(Z_initial,Z_final,y):
 	
 	labels = [r'$D$', r'$D^-$', r'$D^+$', r'$HD$', r'$HD^+$']
 	
-	legend_location = 'upper left'
+	legend_location = 'lower left'
 	
 	colors = ['r','b','c','m','g']
 	
-	#plt.legend(labels, loc=legend_location)
-	
-	#title(r'The change in number density of Deuterium species between '  + str(Z_initial) + ' $\leq$ Z $\leq$ '+ str(Z_final) + ' using the GP98 model' )
-	
-	#xlabel('Redshift (Z)')
-	
-	#ylabel(r'Fractional Abundance $cm^{-3}$')
-	
-	#show()
+	plt.legend(labels, loc=legend_location, prop={'size':10})
 	
 	##Begin plotting Helium Species
-	
-	#figure()
-	
+
 	subplot(223)
 
 	plot(((y[:,7]/2.725)-1),absolute((y[:,14])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'r')
@@ -114,29 +94,23 @@ def plotting_program(Z_initial,Z_final,y):
 	
 	labels = [r'$He$', r'$He^+$', r'$HeH^{+}$']
 	
-	legend_location = 'upper right'
+	legend_location = 'lower left'
 	
 	colors = ['r','b','k']
 	
 	xlabel('Redshift (Z)', fontsize=24)
 	
-	ylabel(r' log$_{10}$(Fractional Abundance) $cm^{-3}$', fontsize=24)
-	#plt.legend(labels, loc=legend_location)
+	plt.gca().xaxis.set_label_coords(1.10, -0.105)
 	
-	#title(r'The change in number density of Helium species between '  + str(Z_initial) + ' $\leq$ Z $\leq$ '+ str(Z_final) + ' using the GP98 model' )
+	ylabel(r' log$_{10}$(Fractional Abundance)', fontsize=24)
 	
-	#xlabel('Redshift (Z)')
-	
-	#ylabel(r'Fractional Abundance $cm^{-3}$')
-	
-	#show()
-	
-	
+	plt.gca().yaxis.set_label_coords(-0.15, 1.105)
+
+	plt.legend(labels, loc=legend_location, prop={'size':10})
 	
 	##Begin plotting Lithium Species
 	subplot(224)
 
-	#figure()
 	plot(((y[:,7]/2.725)-1),absolute((y[:,18])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'r')
 	plot(((y[:,7]/2.725)-1),absolute((y[:,19])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'b')
 	plot(((y[:,7]/2.725)-1),absolute((y[:,20])/(y[:,0]+y[:,1]+y[:,2]+(2*y[:,3])+(2*y[:,4])+y[:,9]+y[:,10]+y[:,11]+(2*y[:,12])+(2*y[:,13])+y[:,15]+y[:,16]+(2*y[:,17])+y[:,18]+y[:,19]+y[:,20]+(2*y[:,21])+(2*y[:,22])+(3*y[:,23])+y[:,14]+(2*y[:,24]))),'c')
@@ -157,17 +131,14 @@ def plotting_program(Z_initial,Z_final,y):
 	legend_location = 'lower left'
 	
 	colors = ['r','b','c','k','g']
-	fig = gcf()
-	suptitle(r'Change in Number Density of Chemical Species between ' + str(Z_initial) + '$\leq$ Z $\leq$' + str(Z_final) + ' using the GP98 Model', fontsize=24)
+	suptitle(r'Change in Number Density of Chemical Species between ' + str(Z_initial) + '$\leq$ Z $\leq$' + str(Z_final), fontsize=20)
 	
-	#plt.legend(labels, loc=legend_location)
+	plt.legend(labels, loc=legend_location, prop={'size':10})
 	
-	#title(r'The change in number density of Lithium species between ' + str(Z_initial) + ' $\leq$ Z $\leq$ '+ str(Z_final) + ' using the GP98 model'  )
-
-
-
 	show()		
-		
+	
+	
+	
 	
 	##Begin plotting of matter temperature evolution
 	figure()
@@ -182,15 +153,13 @@ def plotting_program(Z_initial,Z_final,y):
 	rc('font',**{'family':'serif','sans-serif':['Helvetica']})
 	
 	title(r'The change in gas temperature between ' + str(Z_initial) + ' $\leq$ Z $\leq$ '+ str(Z_final))
-
 	xlabel('Redshift (Z)')
+
 	
 	ylabel(r'Gas temperature (K)')
 
-	
-	show()		
+	#show() 				##disabled by default, as this plot is not commonly used apart from checking it has the correct form.
 		
-	
 	exit = raw_input("\nProcess complete. Press any key to exit...")
 	
 	raise SystemExit

@@ -60,6 +60,7 @@ def check_system_arguments():		#All arguments are put under a single function so
 				print("Accepted, but be warned large values can cause instability")
 			return value
 		
+		
 		##Below the possible arguments to the function are represented as classes, each with different attributes.
 		##Each variable has a "help" parameter, which can give the user insight into how to use the function
 		
@@ -82,17 +83,21 @@ def check_system_arguments():		#All arguments are put under a single function so
 						   
 		parser.add_argument('Particle_density', metavar='Particle_density', type=check_matter_temp,
 						   help='Particle density used in integration (cm3)')	
-
-		parser.add_argument('Source_function', metavar='Source_function', type=str,
-						   help='Radiation source function to be used in the integration')
-
+		
 		parser.add_argument('Plotting', metavar='Plotting', type=int, choices = {1,2},
 						   help='Plot the results? 1 = no 2 = yes')
 						   
+		parser.add_argument('Source_function', metavar='Source_function', type=str,
+						   help='Radiation source function to be used in the integration')
+
+		parser.add_argument('Startflux', help='Startpoint of the flux spectrum (must be positive)')
+
+		parser.add_argument('Endflux', help='endpoint of the flux spectrum (must be positive)')
+
 		args = parser.parse_args()  ##creates all possible arguments defined above
 		
-		
 		##If arguments are present on the command line, they are processed and passed back to PostREC
+				
 		return [True,[args.chemical_model,args.Start_point,args.End_point,args.Step_size, args.Matter_temperature, args.Particle_density ,args.Source_function,args.Plotting]]
 
 	else:
